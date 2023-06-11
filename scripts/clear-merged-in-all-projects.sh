@@ -9,18 +9,18 @@
 
 function clear() {
   should_clear_merged="n"
-  total_projects=$(find -type d -path "*/.git" | wc -l)
+  total_projects=$(find . -type d -path "*/.git" | wc -l)
   current_project=1
   updated_projects=0
   green_color="\033[0;32m"
 
-  for project in $(find -type d -path "*/.git" | sed -E 's|.\/(.*)\/.git|\1|g'); do 
+  for project in $(find . -type d -path "*/.git" | sed -E 's|.\/(.*)\/.git|\1|g'); do
     echo ""
-    read -p "[$current_project/$total_projects] Update and clear merged branchs of $project? [y / n] " should_clear_merged
+    read -p "[${current_project}/${total_projects}] Update and clear merged branchs of ${project}? [y / n] " should_clear_merged
     ((current_project++))
 
-    if [ $should_clear_merged == 'y' ]; then
-      cd $project
+    if [ "${should_clear_merged}" == "y" ]; then
+      cd "${project}" || exit
       git branch
       git checkout dev
       git fetch -p 
@@ -30,7 +30,7 @@ function clear() {
     fi
   done
 
-  echo -e "\n${green_color}Finished! Updated $updated_projects project(s)!\n"
+  echo -e "\n${green_color}Finished! Updated ${updated_projects} project(s)!\n"
 }
 
 clear

@@ -4,4 +4,4 @@
 # Usage: bash ~/bash-scripts/css-compile.sh home 
 
 cd custom/css/
-sass --no-source-map --watch $1.scss ./minify/$1.css --style compressed
+sass --no-source-map --watch ${1}.scss ./minify/${1}.css --style compressed
