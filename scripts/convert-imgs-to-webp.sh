@@ -1,20 +1,19 @@
 #!/bin/bash
 #
-# Description: Convert all jpg and png images from current directory to WebP format
+# Description: Convert all JPG, PNG, and GIF images in the current directory to WebP format
 #
 # Usage: bash path/to/convert-img-to-webp.sh
-#
-# TODO: Convert images from gif format 
 
 
 download_libwebp="n"
+download_imagemagick="n"
 move_lib_to_bin="n"
+quality=75
 converted_imgs=0
 red='\e[0;31m'
 green='\e[0;32m'
 
 convert_to_webp() {
-  # If cweb does not exist, install libwebp and move to /use/bin/
   if [[ -z "$(which cwebp)" ]]; then
 
     read -p "Command not found. Would you like to install cwebp, dwebp, and the WebP libraries? [y/n]: " download_libwebp
@@ -25,7 +24,6 @@ convert_to_webp() {
 
       tar -xvf libwebp-1.3.0-linux-x86-64.tar.gz
 
-
       read -p "Move files to /usr/bin/? (Sudo permission required) [y/n]: " move_lib_to_bin
 
       if [[ "${move_lib_to_bin}" == "y" ]]; then
@@ -34,17 +32,31 @@ convert_to_webp() {
         rm -r libwebp-1.3.0-linux-x86-64 
       fi
 
+      rm libwebp-1.3.0-linux-x86-64.tar.gz
+
     else
       echo -e "\n${red}Finishing process\n"
     fi
   fi
 
+  if [[ -z "$(which convert)" ]]; then
+
+    read -p "Command not found. Would you like to install ImageMagick? (Sudo permission required) [y/n]: " download_imagemagick
+
+    [ "${download_imagemagick}" == "y" ] && sudo apt install imagemagick
+  fi
+
+  mkdir -p ./webp/
+
+  for gif in *.gif; do
+    convert "${gif}" "${gif//..*$/}.jpg"
+  done
 
   for img in *.{jpg,png}; do
     img_name=$(echo "${img}" | sed 's/\..*$//')
 
-    cwebp -q 75 "${img}" -o "${img_name}.webp" \
-      || ./libwebp-1.3.0-linux-x86-64/bin/cwebp -q 75 "${img}" -o "${img_name}.webp"
+    cwebp -q "${quality}" "${img}" -o "./webp/${img_name}.webp" \
+      || ./libwebp-1.3.0-linux-x86-64/bin/cwebp -q "${quality}" "${img}" -o "./webp/${img_name}.webp"
 
     ((converted_imgs++))
   done
@@ -57,14 +69,3 @@ convert_to_webp "$@"
 exit 0
 
 
-
-# Source:
-#
-# https://developers.google.com/speed/webp?hl=pt-br
-# https://developers.google.com/speed/webp/docs/precompiled?hl=pt-br
-#
-# cwebp Docs:
-# https://developers.google.com/speed/webp/docs/cwebp?hl=pt-br
-#
-# Note:
-# img_name="${img/\..*$//}" # This is not working yet...
