@@ -67,5 +67,3 @@ convert_to_webp() {
 convert_to_webp "$@"
 
 exit 0
-
-

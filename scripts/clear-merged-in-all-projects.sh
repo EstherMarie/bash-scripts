@@ -36,5 +36,3 @@ function clear() {
 clear
 
 exit 0
-
-

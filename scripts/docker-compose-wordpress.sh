@@ -9,52 +9,18 @@
 # 
 # Usage: bash ~/bash-scripts/docker-compose-wordpress.sh
 #
-# Important: Change DEFAULT_PASSWORD in line 18
+# Important: Change DEFAULT_PASSWORD in line 16
 
 
-echo -e "\nConfiguring Docker Compose variables..."
+DEFAULT_DB_USER="admin"
+DEFAULT_PASSWORD="quousquetandemabuterecatilinapatientianostra"
+GREEN_COLOR="\033[0;32m"
 
-DEFAULT_DB_USER=admin
-DEFAULT_PASSWORD=quousquetandemabuterecatilinapatientianostra
+configure_theme_files() {
+echo -e "\nCreating theme directory..."
 
-read -p "Write your theme name: " THEME_NAME
-
-read -p "Write your DB name (example: wp-awesome-project): " DB_NAME
-VOLUME_NAME="${DB_NAME//-/_}" # Replace "-" for "_"
-
-read -p "Write your DB user login [Press enter to login as $DEFAULT_DB_USER]: " DB_USER
-DB_USER="${DB_USER:-${DEFAULT_DB_USER}}"
-
-read -s -p "Write your DB password [Press enter to use default password]: " DB_PASSWORD
-DB_PASSWORD="${DB_PASSWORD:-${DEFAULT_PASSWORD}}"
-
-read -s -p "Write your MYSQL root password [Press enter to use default password]: " MYSQL_ROOT_PASSWORD
-MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-${DEFAULT_PASSWORD}}"
-
-
-### Check if WordPress directories exits ###
-NUMBER_OF_FILES=$(ls -l | grep -v ^d | wc -l)
-DEFAULT_SHOULD_DOWNLOAD_WP=n
-
-# if no file is found, download WordPress
-if [ "${NUMBER_OF_FILES}" -eq 1 ]; then
-
-  echo ""
-  read -p "Would you like to download WordPress? [y/n]: " SHOULD_DOWNLOAD_WP
-
-  if [ ${SHOULD_DOWNLOAD_WP} == "y" ]; then
-    echo -e "\nDownloading lastest version of WordPress ..." 
-    wget https://wordpress.org/latest.tar.gz
-    tar -xzf latest.tar.gz
-    mv wordpress/* ./
-    rmdir wordpress
-    rm latest.tar.gz 
-  fi
-
-  echo -e "\nCreating theme directory..."
-
-  mkdir ./wp-content/themes/${THEME_NAME}
-  touch ./wp-content/themes/${THEME_NAME}/{index.php,functions.php}
+mkdir ./wp-content/themes/${THEME_NAME}
+touch ./wp-content/themes/${THEME_NAME}/{index.php,functions.php}
 
 cat <<-EOF > ./wp-content/themes/${THEME_NAME}/style.css 
 /*
@@ -76,7 +42,6 @@ Use it to make something cool, have fun, and share what you've learned with othe
 */
 EOF
 
-fi
 
 echo "Creating uploads.ini..."
 
@@ -85,7 +50,54 @@ upload_max_filesize = 2000M
 post_max_size = 4000M
 max_execution_time = 600
 EOF
+}
 
+if [[ $(find docker-compose.yml > /dev/null 2>&1) ]]; then
+  echo "Project already has docker-compose"
+  echo "Exiting..."
+  exit 1
+fi
+
+echo -e "\nConfiguring Docker Compose variables..."
+
+read -p "Write your theme name: " THEME_NAME
+
+read -p "Write your DB name (example: wp-awesome-project): " DB_NAME
+VOLUME_NAME="${DB_NAME//-/_}" # Replace "-" for "_"
+
+read -p "Write your DB user login [Press enter to login as ${DEFAULT_DB_USER}]: " DB_USER
+DB_USER="${DB_USER:-${DEFAULT_DB_USER}}"
+
+read -s -p "Write your DB password [Press enter to use default password]: " DB_PASSWORD
+DB_PASSWORD="${DB_PASSWORD:-${DEFAULT_PASSWORD}}"
+
+echo ""
+read -s -p "Write your MYSQL root password [Press enter to use default password]: " MYSQL_ROOT_PASSWORD
+MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-${DEFAULT_PASSWORD}}"
+
+
+### Check if WordPress directories exits ###
+NUMBER_OF_FILES=$(ls -l | grep -c -v "total")
+
+# if no file is found, download WordPress
+if [ "${NUMBER_OF_FILES}" -eq 0 ]; then
+
+  echo -e "\n"
+  read -p "Would you like to download WordPress? [y/n]: " SHOULD_DOWNLOAD_WP
+
+  if [ ${SHOULD_DOWNLOAD_WP} == "y" ]; then
+    echo -e "\nDownloading lastest version of WordPress ..." 
+    wget https://wordpress.org/latest.tar.gz
+    tar -xzf latest.tar.gz
+    mv wordpress/* ./
+    rmdir wordpress
+    rm latest.tar.gz 
+
+    configure_theme_files
+  fi
+fi
+
+echo -e "\n"
 echo "Creating Docker Compose file..."
 
 cat <<-EOF > docker-compose.yml
@@ -144,7 +156,7 @@ volumes:
 EOF
 
 ### Optionaly add files to .gitignore ###
-SHOULD_ADD_TO_GITIGNORE=y
+echo ""
 read -p "Would you like to add Docker Compose files to .gitignore? [y/n]: " SHOULD_ADD_TO_GITIGNORE 
 
 if [ ${SHOULD_ADD_TO_GITIGNORE}  == "y" ]; then
@@ -157,4 +169,5 @@ fi
 
 echo -e "\nCreating .gitignore..."
 
-echo -e "\nDocker compose successfully configured for WordPress!"   
+echo -e "\n${GREEN_COLOR}Docker compose successfully configured for WordPress!\n"   
+exit 0
