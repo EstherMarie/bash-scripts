@@ -8,7 +8,7 @@
 
 
 css_compile() {
-  scss_files=$(find . -name "*.scss" | sed 's/.*\/\(\w*\).scss$/\1/')
+  scss_files=$(find . -name "*.scss" | sed 's/.*\/\([\w-]*\).scss$/\1/')
   path_to_css_files=$(find . -name "*.scss" | head -n 1 | sed 's/\w*.scss$//')
   command=""
 
